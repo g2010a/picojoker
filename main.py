@@ -140,6 +140,7 @@ class OnlineGermanPunchlineJoke(BaseJoke):
             return
         draw_text(0, 0, self.joke)
 
+
 class LocalPunchlineJoke(BaseJoke):
     def __init__(self, filename):
         super().__init__()
