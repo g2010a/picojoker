@@ -11,7 +11,7 @@ import pimoroni
 import gc
 import network
 import urequests
-import uasyncio as asyncio
+import uasyncio
 from picographics import PicoGraphics, DISPLAY_PICO_DISPLAY
 
 SCREEN_CONFIG = {
@@ -116,15 +116,15 @@ class OnlineGermanPunchlineJoke(BaseJoke):
         self.error = None
 
     async def fetch_url(self):
-        with urequests.get(self.url) as response:
-            return response
+        response = urequests.get(self.url)
+        return response
 
     async def fetch(self):
         log("Fetching witz...")
         gc.collect()
         led.set_rgb(*LED_COLOR_BUSY)
         try:
-            response = await asyncio.get_event_loop().create_task(self.fetch_url())
+            response = await uasyncio.get_event_loop().create_task(self.fetch_url())
             json_response = ujson.loads(response.text)
             self.joke = self._sanitize(json_response[0]["text"])
         except Exception as e:
@@ -183,15 +183,15 @@ class Weather:
         self.error = None
 
     async def fetch_url(self):
-        with urequests.get(self.url, headers=self.request_headers) as response:
-            return response
+        response = urequests.get(self.url, headers=self.request_headers)
+        return response
     
     async def fetch_weather(self):
         log(f"Requesting weather data from {self.url}")
         gc.collect()
         led.set_rgb(*LED_COLOR_BUSY)
         try:
-            response = await asyncio.get_event_loop().create_task(self.fetch_url())
+            response = await uasyncio.get_event_loop().create_task(self.fetch_url())
             self.weather_data = ujson.loads(response.text)
         except Exception as e:
             self.error = e
@@ -263,7 +263,7 @@ async def connect_wifi():
     station.connect(WIFI_SSID, WIFI_PASS)
 
     while not station.isconnected():
-        await asyncio.sleep(1)
+        await uasyncio.sleep(1)
 
     log(f"Connected to WiFi {WIFI_SSID}")
     log(str(station.ifconfig()))
@@ -290,10 +290,10 @@ async def main():
         elif BUTTON_A.read():
             await weather.fetch_weather()
             weather.display()
-        await asyncio.sleep(0.1)
+        await uasyncio.sleep(0.1)
 
 
 try:
-    asyncio.run(main())
+    uasyncio.run(main())
 except KeyboardInterrupt:
     pass
