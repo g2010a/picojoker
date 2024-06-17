@@ -199,11 +199,11 @@ class Weather:
             led.set_rgb(*LED_COLOR_IDLE)
 
     def display(self):
+        clear_screen()
         if self.error:
             draw_text(0, 0, f"Error: {self.error}")
             log(f"Error: {self.error}")
             return
-        clear_screen()
         draw_text(0, 0, f"{self.weather_data["current"]["time"]}")
         draw_text(0, 16, self._wmo_weather_code_string(self.weather_data["current"]["weather_code"]))
         draw_text(0, 32, f"Temp: {self.weather_data["current"]["temperature_2m"]}°C")
