@@ -83,6 +83,38 @@ def log(text):
     display.update()
 
 
+class Echo:
+    def __init__(self):
+        self.url = "https://echo.free.beeceptor.com"
+        self.error = None
+        self.response = None
+
+    async def fetch(self):
+        gc.collect()
+        log("Validating network connection...")
+        led.set_rgb(*LED_COLOR_BUSY)
+        try:
+            response = await uasyncio.get_event_loop().create_task(self.fetch_url())
+            self.response = response.text
+        except Exception as e:
+            self.error = e
+        finally:
+            led.set_rgb(*LED_COLOR_IDLE)
+
+    async def fetch_url(self):
+        log(f"Fetching {self.url}")
+        response = urequests.get(self.url)
+        return response
+    
+    def display(self):
+        clear_screen()
+        if self.error:
+            draw_text(0, 0, f"Error: {self.error}")
+            log(f"Error: {self.error}")
+            return
+        draw_text(0, 0, self.response.text if self.response else "No response")
+
+
 class BaseJoke:
     def __init__(self):
         pass
@@ -120,10 +152,10 @@ class OnlineGermanPunchlineJoke(BaseJoke):
         return response
 
     async def fetch(self):
-        log("Fetching witz...")
         gc.collect()
         led.set_rgb(*LED_COLOR_BUSY)
         try:
+            log(f"Fetching {self.url}")
             response = await uasyncio.get_event_loop().create_task(self.fetch_url())
             json_response = ujson.loads(response.text)
             self.joke = self._sanitize(json_response[0]["text"])
@@ -184,11 +216,11 @@ class Weather:
         self.error = None
 
     async def fetch_url(self):
+        log(f"Fetching {self.url}")
         response = urequests.get(self.url, headers=self.request_headers)
         return response
     
-    async def fetch_weather(self):
-        log(f"Requesting weather data from {self.url}")
+    async def fetch(self):
         gc.collect()
         led.set_rgb(*LED_COLOR_BUSY)
         try:
@@ -289,8 +321,12 @@ async def main():
             await online_german_joke.fetch()
             online_german_joke.display()
         elif BUTTON_A.read():
-            await weather.fetch_weather()
+            await weather.fetch()
             weather.display()
+        elif BUTTON_B.read():
+            echo = Echo()
+            await echo.fetch()
+            echo.display()
         await uasyncio.sleep(0.1)
 
 
