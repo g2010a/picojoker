@@ -91,7 +91,6 @@ class Echo:
 
     async def fetch(self):
         gc.collect()
-        log("Validating network connection...")
         led.set_rgb(*LED_COLOR_BUSY)
         try:
             response = await uasyncio.get_event_loop().create_task(self.fetch_url())
@@ -304,30 +303,35 @@ async def connect_wifi():
 
 
 async def main():
-    # Initial joke fetch
     local_joke = LocalPunchlineJoke(LOCAL_JOKE_FILE)
+    online_german_joke = OnlineGermanPunchlineJoke()
+    weather = Weather(WEATHER_CONFIG)
+    echo = Echo()
+
     await local_joke.fetch()
     local_joke.display()
 
-    online_german_joke = OnlineGermanPunchlineJoke()
-    weather = Weather(WEATHER_CONFIG)
+    wifi_task = uasyncio.get_event_loop().create_task(connect_wifi())
+    network_connected = False
 
-    await connect_wifi()
     while True:
         if BUTTON_Y.read():
             await local_joke.fetch()
             local_joke.display()
-        elif BUTTON_X.read():
+        elif BUTTON_X.read() and network_connected:
             await online_german_joke.fetch()
             online_german_joke.display()
-        elif BUTTON_A.read():
+        elif BUTTON_A.read() and network_connected:
             await weather.fetch()
             weather.display()
-        elif BUTTON_B.read():
-            echo = Echo()
+        elif BUTTON_B.read() and network_connected:
             await echo.fetch()
             echo.display()
-        await uasyncio.sleep(0.1)
+
+        if not network_connected and wifi_task.done():
+            network_connected = True
+
+        await uasyncio.sleep(0.2)
 
 
 try:
