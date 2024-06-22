@@ -37,7 +37,9 @@ WEATHER_CONFIG = {
     "url_template": "https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current={current}&hourly={hourly}&daily={daily}&timezone={timezone}&forecast_days={forecast_days}",
 }
 
-LOCAL_JOKE_FILE = "jokes.min.json"
+LOCAL_JOKE_FILE_EN = "jokes-en.min.json"
+LOCAL_JOKE_FILE_ES = "jokes-es.min.json"
+LOCAL_JOKE_FILE_DE = "jokes-de.min.json"
 
 LED_COLOR_IDLE = (0, 0, 10)
 LED_COLOR_BUSY = (10, 5, 0)
@@ -175,8 +177,8 @@ class OnlineGermanPunchlineJoke(BaseJoke):
 class LocalPunchlineJoke(BaseJoke):
     def __init__(self, filename):
         super().__init__()
-        self.setup = ""
-        self.punchline = ""
+        self.setup = None
+        self.punchline = None
         self.filename = filename
         self.error = None
 
@@ -190,7 +192,9 @@ class LocalPunchlineJoke(BaseJoke):
             random_joke = random.choice(jokes)
             joke = ujson.loads(random_joke)
             self.setup = self._sanitize(joke[0])
-            self.punchline = self._sanitize(joke[1])
+            self.punchline = ""
+            if len(joke) > 1:
+                self.punchline = self._sanitize(joke[1])
         except Exception as e:
             self.error = e
         finally:
@@ -303,30 +307,34 @@ async def connect_wifi():
 
 
 async def main():
-    local_joke = LocalPunchlineJoke(LOCAL_JOKE_FILE)
+    local_joke_en = LocalPunchlineJoke(LOCAL_JOKE_FILE_EN)
+    local_joke_es = LocalPunchlineJoke(LOCAL_JOKE_FILE_ES)
+    local_joke_de = LocalPunchlineJoke(LOCAL_JOKE_FILE_DE)
     online_german_joke = OnlineGermanPunchlineJoke()
     weather = Weather(WEATHER_CONFIG)
     echo = Echo()
 
-    await local_joke.fetch()
-    local_joke.display()
+    await local_joke_en.fetch()
+    local_joke_en.display()
 
     wifi_task = uasyncio.get_event_loop().create_task(connect_wifi())
     network_connected = False
 
     while True:
         if BUTTON_Y.read():
-            await local_joke.fetch()
-            local_joke.display()
+            await local_joke_en.fetch()
+            local_joke_en.display()
         elif BUTTON_X.read() and network_connected:
-            await online_german_joke.fetch()
-            online_german_joke.display()
+            await local_joke_de.fetch()
+            local_joke_de.display()
         elif BUTTON_A.read() and network_connected:
             await weather.fetch()
             weather.display()
         elif BUTTON_B.read() and network_connected:
-            await echo.fetch()
-            echo.display()
+            # await echo.fetch()
+            # echo.display()
+            await local_joke_es.fetch()
+            local_joke_es.display()
 
         if not network_connected and wifi_task.done():
             network_connected = True
