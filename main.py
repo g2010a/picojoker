@@ -317,8 +317,8 @@ async def main():
     await local_joke_en.fetch()
     local_joke_en.display()
 
-    wifi_task = uasyncio.get_event_loop().create_task(connect_wifi())
     network_connected = False
+    wifi_task = None
 
     while True:
         if BUTTON_Y.read():
@@ -335,6 +335,9 @@ async def main():
             # echo.display()
             await local_joke_es.fetch()
             local_joke_es.display()
+
+        if not wifi_task:
+            wifi_task = uasyncio.get_event_loop().create_task(connect_wifi())
 
         if not network_connected and wifi_task.done():
             network_connected = True
