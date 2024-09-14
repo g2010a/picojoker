@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joke Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        #joke-setup, #joke-punchline {
+            margin: 1rem 0;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Joke Display</h1>
+        <button onclick="loadJoke('en')">English Joke</button>
+        <button onclick="loadJoke('de')">German Joke</button>
+        <button onclick="loadJoke('es')">Spanish Joke</button>
+        <p id="joke-setup"></p>
+        <p id="joke-punchline"></p>
+    </div>
+
+    <script>
+        async function loadJoke(language) {
+            try {
+                const response = await fetch(`jokes-${language}.min.json`);
+                const text = await response.text();
+                const jokes = text.split('\n')
+                    .filter(line => line.trim() !== '')
+                    .map(line => JSON.parse(line));
+                
+                const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+                
+                document.getElementById('joke-setup').textContent = randomJoke[0];
+                document.getElementById('joke-punchline').textContent = randomJoke[1];
+            } catch (error) {
+                console.error('Error loading joke:', error);
+                document.getElementById('joke-setup').textContent = 'Error loading joke';
+                document.getElementById('joke-punchline').textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>
